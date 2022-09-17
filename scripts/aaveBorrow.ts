@@ -33,10 +33,9 @@ async function aaveBorrow(): Promise<void> {
   await borrowDai(daiTokenADdress, lendingPool, amountDaiToBorrowWei, deployer)
   // how much DAI can we borrow based on the value of ETH
   console.log("You've borrowed!")
-
   await getBorrowUserData(lendingPool, deployer)
-
-
+  await repay(daiTokenADdress, lendingPool, amountDaiToBorrowWei, deployer)
+  await getBorrowUserData(lendingPool, deployer)
 }
 
 async function borrowDai(
@@ -46,6 +45,18 @@ async function borrowDai(
   account: Address
 ) {
   const borrowTx = await lendingPool.borrow(daiAddress, amountDaiToBorrowWei, 1, 0, account)
+}
+
+async function repay(
+  daiAddress: Address,
+  lendingPool: ILendingPool,
+  amountDaiToBorrowWei: BigNumber,
+  account: Address
+) {
+  await approveErc20(daiAddress, lendingPool.address, amountDaiToBorrowWei, account)
+  const repayTx = await lendingPool.repay(daiAddress, amountDaiToBorrowWei, 1, account)
+  await repayTx.wait(1)
+  console.log("Repaid!")
 }
 
 async function getDaiPrice(): Promise<BigNumber> {
@@ -61,9 +72,9 @@ async function getDaiPrice(): Promise<BigNumber> {
 async function getBorrowUserData(lendingPool: ILendingPool, account: Address) {
   const [totalCollateralETH, totalDebtETH, availableBorrowsETH] =
     await lendingPool.getUserAccountData(account)
-    console.log(`You have ${totalCollateralETH.toString()} worth of ETH deposited.`)
-    console.log(`You have ${totalDebtETH.toString()} worth of ETH borrowed.`)
-    console.log(`You can borrow ${availableBorrowsETH.toString()} worth of ETH.`)
+  console.log(`You have ${totalCollateralETH.toString()} worth of ETH deposited.`)
+  console.log(`You have ${totalDebtETH.toString()} worth of ETH borrowed.`)
+  console.log(`You can borrow ${availableBorrowsETH.toString()} worth of ETH.`)
 
   return {
     totalCollateralETH,
